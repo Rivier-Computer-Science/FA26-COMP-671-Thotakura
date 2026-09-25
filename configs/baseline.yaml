@@ -1,0 +1,16 @@
+experiment_name: baseline_cnn
+seed: 42
+data_dir: data
+output_dir: artifacts
+image_size: 64
+batch_size: 64
+num_workers: 0
+validation_fraction: 0.15
+augmentation: true
+model: baseline_cnn
+pretrained: false
+freeze_backbone: false
+epochs: 15
+learning_rate: 0.001
+weight_decay: 0.0001
+early_stopping_patience: 4

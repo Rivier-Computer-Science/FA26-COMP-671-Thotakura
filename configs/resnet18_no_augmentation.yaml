@@ -1,0 +1,16 @@
+experiment_name: resnet18_no_augmentation
+seed: 42
+data_dir: data
+output_dir: artifacts
+image_size: 64
+batch_size: 64
+num_workers: 0
+validation_fraction: 0.15
+augmentation: false
+model: resnet18
+pretrained: true
+freeze_backbone: false
+epochs: 12
+learning_rate: 0.0003
+weight_decay: 0.0001
+early_stopping_patience: 4
