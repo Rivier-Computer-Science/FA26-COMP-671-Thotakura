@@ -15,17 +15,26 @@ GTSRB_STD = (0.2724, 0.2608, 0.2669)
 
 @dataclass(frozen=True)
 class DataLoaders:
+    """Training, validation, and test DataLoaders."""
+
     train: DataLoader
     validation: DataLoader
     test: DataLoader
 
 
-def build_transform(image_size: int) -> transforms.Compose:
+def build_transform(image_size: int = 64) -> transforms.Compose:
+    """Resize, convert, and normalize a traffic-sign image."""
+    if image_size <= 0:
+        raise ValueError("image_size must be positive")
+
     return transforms.Compose(
         [
             transforms.Resize((image_size, image_size)),
             transforms.ToTensor(),
-            transforms.Normalize(GTSRB_MEAN, GTSRB_STD),
+            transforms.Normalize(
+                mean=GTSRB_MEAN,
+                std=GTSRB_STD,
+            ),
         ]
     )
 
@@ -35,6 +44,7 @@ def split_indices(
         validation_fraction: float,
         seed: int,
 ) -> tuple[list[int], list[int]]:
+    """Create deterministic, non-overlapping train and validation indices."""
     if dataset_size <= 1:
         raise ValueError("dataset_size must be greater than 1")
 
@@ -44,12 +54,23 @@ def split_indices(
         )
 
     generator = torch.Generator().manual_seed(seed)
+
     shuffled_indices = torch.randperm(
         dataset_size,
         generator=generator,
     ).tolist()
 
-    validation_size = round(dataset_size * validation_fraction)
+    validation_size = round(
+        dataset_size * validation_fraction
+    )
+
+    # Ensure both subsets contain at least one example.
+    validation_size = max(1, validation_size)
+    validation_size = min(
+        dataset_size - 1,
+        validation_size,
+        )
+
     validation_indices = shuffled_indices[:validation_size]
     training_indices = shuffled_indices[validation_size:]
 
@@ -57,13 +78,20 @@ def split_indices(
 
 
 def create_dataloaders(
-        data_dir: str | Path,
-        image_size: int,
-        batch_size: int,
-        validation_fraction: float,
-        seed: int,
+        data_dir: str | Path = "data",
+        image_size: int = 64,
+        batch_size: int = 64,
+        validation_fraction: float = 0.15,
+        seed: int = 42,
         num_workers: int = 0,
 ) -> DataLoaders:
+    """Download GTSRB and create reproducible DataLoaders."""
+    if batch_size <= 0:
+        raise ValueError("batch_size must be positive")
+
+    if num_workers < 0:
+        raise ValueError("num_workers cannot be negative")
+
     transform = build_transform(image_size)
 
     complete_training_dataset = GTSRB(
@@ -90,6 +118,7 @@ def create_dataloaders(
         complete_training_dataset,
         training_indices,
     )
+
     validation_dataset = Subset(
         complete_training_dataset,
         validation_indices,
@@ -101,20 +130,29 @@ def create_dataloaders(
         "pin_memory": torch.cuda.is_available(),
     }
 
+    shuffle_generator = torch.Generator().manual_seed(seed)
+
+    training_loader = DataLoader(
+        training_dataset,
+        shuffle=True,
+        generator=shuffle_generator,
+        **loader_options,
+    )
+
+    validation_loader = DataLoader(
+        validation_dataset,
+        shuffle=False,
+        **loader_options,
+    )
+
+    test_loader = DataLoader(
+        test_dataset,
+        shuffle=False,
+        **loader_options,
+    )
+
     return DataLoaders(
-        train=DataLoader(
-            training_dataset,
-            shuffle=True,
-            **loader_options,
-        ),
-        validation=DataLoader(
-            validation_dataset,
-            shuffle=False,
-            **loader_options,
-        ),
-        test=DataLoader(
-            test_dataset,
-            shuffle=False,
-            **loader_options,
-        ),
+        train=training_loader,
+        validation=validation_loader,
+        test=test_loader,
     )
