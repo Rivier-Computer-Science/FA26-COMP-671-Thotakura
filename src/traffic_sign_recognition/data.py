@@ -5,6 +5,7 @@ import torch
 from torch.utils.data import DataLoader, Subset
 from torchvision import transforms
 from torchvision.datasets import GTSRB
+from typing import Any, Callable
 
 
 NUM_CLASSES = 43
@@ -22,14 +23,37 @@ class DataLoaders:
     test: DataLoader
 
 
-def build_transform(image_size: int = 64) -> transforms.Compose:
-    """Resize, convert, and normalize a traffic-sign image."""
+def build_transform(
+        image_size: int = 64,
+        augment: bool = False,
+) -> transforms.Compose:
+    """Create preprocessing with optional training augmentation."""
     if image_size <= 0:
         raise ValueError("image_size must be positive")
 
-    return transforms.Compose(
+    operations: list[Callable[[Any], Any]] = [
+        transforms.Resize((image_size, image_size)),
+    ]
+
+    if augment:
+        operations.extend(
+            [
+                transforms.RandomRotation(degrees=10),
+                transforms.RandomAffine(
+                    degrees=0,
+                    translate=(0.08, 0.08),
+                    scale=(0.9, 1.1),
+                ),
+                transforms.ColorJitter(
+                    brightness=0.2,
+                    contrast=0.2,
+                    saturation=0.1,
+                ),
+            ]
+        )
+
+    operations.extend(
         [
-            transforms.Resize((image_size, image_size)),
             transforms.ToTensor(),
             transforms.Normalize(
                 mean=GTSRB_MEAN,
@@ -37,6 +61,8 @@ def build_transform(image_size: int = 64) -> transforms.Compose:
             ),
         ]
     )
+
+    return transforms.Compose(operations)
 
 
 def split_indices(
@@ -84,6 +110,7 @@ def create_dataloaders(
         validation_fraction: float = 0.15,
         seed: int = 42,
         num_workers: int = 0,
+        augmentation: bool = True,
 ) -> DataLoaders:
     """Download GTSRB and create reproducible DataLoaders."""
     if batch_size <= 0:
@@ -92,35 +119,53 @@ def create_dataloaders(
     if num_workers < 0:
         raise ValueError("num_workers cannot be negative")
 
-    transform = build_transform(image_size)
+    training_transform = build_transform(
+        image_size=image_size,
+        augment=augmentation,
+    )
 
-    complete_training_dataset = GTSRB(
+    evaluation_transform = build_transform(
+        image_size=image_size,
+        augment=False,
+    )
+
+    # Training uses random augmentation.
+    training_source = GTSRB(
         root=str(data_dir),
         split="train",
         download=True,
-        transform=transform,
+        transform=training_transform,
     )
 
+    # Validation uses deterministic preprocessing.
+    validation_source = GTSRB(
+        root=str(data_dir),
+        split="train",
+        download=True,
+        transform=evaluation_transform,
+    )
+
+    # The official test set also uses deterministic preprocessing.
     test_dataset = GTSRB(
         root=str(data_dir),
         split="test",
         download=True,
-        transform=transform,
+        transform=evaluation_transform,
     )
 
     training_indices, validation_indices = split_indices(
-        dataset_size=len(complete_training_dataset),
+        dataset_size=len(training_source),
         validation_fraction=validation_fraction,
         seed=seed,
     )
 
     training_dataset = Subset(
-        complete_training_dataset,
+        training_source,
         training_indices,
     )
 
     validation_dataset = Subset(
-        complete_training_dataset,
+        validation_source,
         validation_indices,
     )
 
