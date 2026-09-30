@@ -1,6 +1,9 @@
 import pytest
 import torch
 from PIL import Image
+from torchvision import transforms
+import torch
+from PIL import Image
 
 from src.traffic_sign_recognition.data import (
     build_transform,
@@ -69,3 +72,52 @@ def test_rejects_invalid_batch_size() -> None:
 def test_rejects_negative_num_workers() -> None:
     with pytest.raises(ValueError, match="num_workers"):
         create_dataloaders(num_workers=-1)
+
+def test_augmented_transform_produces_expected_shape() -> None:
+    image = Image.new("RGB", (40, 30), color="red")
+
+    transformed_image = build_transform(
+        image_size=64,
+        augment=True,
+    )(image)
+
+    assert transformed_image.shape == torch.Size([3, 64, 64])
+    assert transformed_image.dtype == torch.float32
+
+
+def test_augmentation_pipeline_contains_random_operations() -> None:
+    pipeline = build_transform(
+        image_size=64,
+        augment=True,
+    )
+
+    assert any(
+        isinstance(operation, transforms.RandomRotation)
+        for operation in pipeline.transforms
+    )
+    assert any(
+        isinstance(operation, transforms.RandomAffine)
+        for operation in pipeline.transforms
+    )
+    assert any(
+        isinstance(operation, transforms.ColorJitter)
+        for operation in pipeline.transforms
+    )
+
+
+def test_evaluation_pipeline_has_no_random_augmentation() -> None:
+    pipeline = build_transform(
+        image_size=64,
+        augment=False,
+    )
+
+    random_types = (
+        transforms.RandomRotation,
+        transforms.RandomAffine,
+        transforms.ColorJitter,
+    )
+
+    assert not any(
+        isinstance(operation, random_types)
+        for operation in pipeline.transforms
+    )
