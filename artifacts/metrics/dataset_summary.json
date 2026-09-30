@@ -1,0 +1,7 @@
+{
+  "training_images": 26640,
+  "test_images": 12630,
+  "number_of_classes": 43,
+  "smallest_training_class": 150,
+  "largest_training_class": 1500
+}
