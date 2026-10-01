@@ -1,5 +1,6 @@
 import torch
 from torch import nn
+from torchvision.models import ResNet18_Weights, resnet18
 
 from .data import NUM_CLASSES
 
@@ -70,9 +71,32 @@ class BaselineCNN(nn.Module):
 def create_model(
         model_name: str,
         num_classes: int = NUM_CLASSES,
+        pretrained: bool = False,
+        freeze_backbone: bool = False,
 ) -> nn.Module:
-    """Create a model using its configuration name."""
+    """Create a baseline CNN or ResNet-18 classifier."""
+    if num_classes <= 0:
+        raise ValueError("num_classes must be positive")
+
     if model_name == "baseline_cnn":
         return BaselineCNN(num_classes=num_classes)
+
+    if model_name == "resnet18":
+        weights = (
+            ResNet18_Weights.DEFAULT
+            if pretrained
+            else None
+        )
+
+        model = resnet18(weights=weights)
+
+        if freeze_backbone:
+            for parameter in model.parameters():
+                parameter.requires_grad = False
+
+        input_features = model.fc.in_features
+        model.fc = nn.Linear(input_features, num_classes)
+
+        return model
 
     raise ValueError(f"Unsupported model: {model_name}")
