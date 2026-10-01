@@ -49,3 +49,57 @@ def test_rejects_invalid_number_of_classes() -> None:
 def test_rejects_unknown_model_name() -> None:
     with pytest.raises(ValueError, match="Unsupported model"):
         create_model("unknown_model")
+
+def test_resnet18_output_shape_without_download() -> None:
+    model = create_model(
+        model_name="resnet18",
+        num_classes=43,
+        pretrained=False,
+        freeze_backbone=False,
+    )
+
+    images = torch.randn(2, 3, 64, 64)
+    output = model(images)
+
+    assert output.shape == torch.Size([2, 43])
+
+
+def test_resnet_fine_tuning_enables_all_parameters() -> None:
+    model = create_model(
+        model_name="resnet18",
+        num_classes=43,
+        pretrained=False,
+        freeze_backbone=False,
+    )
+
+    assert all(
+        parameter.requires_grad
+        for parameter in model.parameters()
+    )
+
+
+def test_frozen_resnet_only_trains_final_layer() -> None:
+    model = create_model(
+        model_name="resnet18",
+        num_classes=43,
+        pretrained=False,
+        freeze_backbone=True,
+    )
+
+    backbone_parameters = [
+        parameter
+        for name, parameter in model.named_parameters()
+        if not name.startswith("fc.")
+    ]
+
+    final_layer_parameters = list(model.fc.parameters())
+
+    assert all(
+        not parameter.requires_grad
+        for parameter in backbone_parameters
+    )
+
+    assert all(
+        parameter.requires_grad
+        for parameter in final_layer_parameters
+    )
