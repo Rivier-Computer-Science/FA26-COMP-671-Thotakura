@@ -18,12 +18,9 @@ def set_seed(seed: int) -> None:
 
 
 def select_device() -> torch.device:
-    """Select the best available training device."""
+    """Select a stable device for model training."""
     if torch.cuda.is_available():
         return torch.device("cuda")
-
-    if torch.backends.mps.is_available():
-        return torch.device("mps")
 
     return torch.device("cpu")
 

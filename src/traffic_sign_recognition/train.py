@@ -44,6 +44,7 @@ def train_experiment(
         config: ExperimentConfig,
 ) -> dict[str, float | int]:
     """Train, validate, checkpoint, and test one experiment."""
+    torch.set_num_threads(4)
     set_seed(config.seed)
     device = select_device()
 
