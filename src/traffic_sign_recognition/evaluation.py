@@ -1,5 +1,6 @@
 import json
 from pathlib import Path
+from tqdm.auto import tqdm
 
 import matplotlib
 
@@ -34,7 +35,11 @@ def collect_predictions(
     confidences: list[float] = []
 
     with torch.no_grad():
-        for images, labels in loader:
+        for images, labels in tqdm(
+                loader,
+                desc="Testing",
+                unit="batch",
+        ):
             images = images.to(device)
 
             logits = model(images)

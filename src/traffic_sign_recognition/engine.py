@@ -3,6 +3,7 @@ from dataclasses import dataclass
 import torch
 from torch import nn
 from torch.utils.data import DataLoader
+from tqdm.auto import tqdm
 
 
 @dataclass(frozen=True)
@@ -28,18 +29,34 @@ def run_epoch(
     total_correct = 0
     total_examples = 0
 
-    for images, labels in loader:
+    description = (
+        "Training"
+        if training
+        else "Validation"
+    )
+
+    progress = tqdm(
+        loader,
+        desc=description,
+        leave=False,
+        unit="batch",
+    )
+
+    for batch_number, (images, labels) in enumerate(
+            progress,
+            start=1,
+    ):
         images = images.to(device)
         labels = labels.to(device)
 
-        if training:
+        if optimizer is not None:
             optimizer.zero_grad(set_to_none=True)
 
         with torch.set_grad_enabled(training):
             logits = model(images)
             loss = criterion(logits, labels)
 
-            if training:
+            if optimizer is not None:
                 loss.backward()
                 optimizer.step()
 
@@ -50,6 +67,14 @@ def run_epoch(
                 logits.argmax(dim=1) == labels
         ).sum().item()
         total_examples += batch_size
+
+        if batch_number % 25 == 0:
+            progress.set_postfix(
+                loss=f"{total_loss / total_examples:.4f}",
+                accuracy=(
+                    f"{total_correct / total_examples:.4f}"
+                ),
+            )
 
     if total_examples == 0:
         raise ValueError("DataLoader cannot be empty")

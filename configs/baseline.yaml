@@ -4,7 +4,7 @@ data_dir: data
 output_dir: artifacts
 image_size: 64
 batch_size: 64
-num_workers: 0
+num_workers: 2
 validation_fraction: 0.15
 augmentation: true
 model: baseline_cnn
