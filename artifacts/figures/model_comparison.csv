@@ -1,0 +1,3 @@
+experiment,accuracy,macro_f1,best_epoch
+resnet18_finetuned,0.9703087885985748,0.950759082666515,9
+baseline_cnn,0.9318289786223278,0.905761378469406,15
