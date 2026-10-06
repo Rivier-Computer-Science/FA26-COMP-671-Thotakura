@@ -1,0 +1,7 @@
+{
+  "examples": 12630,
+  "correct_predictions": 12255,
+  "incorrect_predictions": 375,
+  "error_rate": 0.029691211401425176,
+  "high_confidence_errors": 81
+}
