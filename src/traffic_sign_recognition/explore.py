@@ -1,6 +1,6 @@
 import json
+from collections.abc import Iterable
 from pathlib import Path
-from typing import Iterable
 
 import matplotlib
 
@@ -48,7 +48,7 @@ def build_class_distribution(
 
 def extract_labels(dataset: GTSRB) -> list[int]:
     """Read labels from torchvision's GTSRB metadata."""
-    samples = getattr(dataset, "_samples")
+    samples = dataset._samples
 
     return [
         int(target)

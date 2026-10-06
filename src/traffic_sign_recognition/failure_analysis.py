@@ -11,7 +11,6 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import pandas as pd
 
-
 REQUIRED_COLUMNS = {
     "target",
     "prediction",
@@ -149,13 +148,11 @@ def analyze_failures(
     plt.close(figure)
 
     summary: dict[str, int | float] = {
-        "examples": int(len(predictions)),
+        "examples": len(predictions),
         "correct_predictions": int(
             predictions["correct"].sum()
         ),
-        "incorrect_predictions": int(
-            len(incorrect)
-        ),
+        "incorrect_predictions": len(incorrect),
         "error_rate": float(
             len(incorrect) / len(predictions)
         ),

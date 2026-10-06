@@ -1,12 +1,12 @@
+from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Any
 
 import torch
 from torch.utils.data import DataLoader, Subset
 from torchvision import transforms
 from torchvision.datasets import GTSRB
-from typing import Any, Callable
-
 
 NUM_CLASSES = 43
 

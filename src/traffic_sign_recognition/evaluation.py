@@ -1,8 +1,8 @@
 import json
 from pathlib import Path
-from tqdm.auto import tqdm
 
 import matplotlib
+from tqdm.auto import tqdm
 
 matplotlib.use("Agg")
 

@@ -9,7 +9,6 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import pandas as pd
 
-
 REQUIRED_METRICS = {"accuracy", "macro_f1"}
 
 

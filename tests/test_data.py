@@ -2,8 +2,6 @@ import pytest
 import torch
 from PIL import Image
 from torchvision import transforms
-import torch
-from PIL import Image
 
 from src.traffic_sign_recognition.data import (
     build_transform,
