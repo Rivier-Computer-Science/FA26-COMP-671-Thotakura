@@ -221,7 +221,7 @@ __marimo__/
 .DS_Store
 
 # Downloaded dataset
-data/
+/data
 
 # Large trained model files
 artifacts/checkpoints/*.pt
